@@ -92,19 +92,10 @@ def main(argv):
     dance_prefs = {x.name: x.rankings for x in dances.values()}
     capacities = {x.name: x.quota for x in dances.values()}
 
-    print(dancer_prefs.keys())
-    print(dance_prefs.keys())
-
     # Our matching algorithm is basically just the hospital matching algorithm.
     # https://en.wikipedia.org/wiki/Stable_marriage_problem
-    game = HospitalResident.create_from_dictionaries(dancer_prefs, dance_prefs,
-                                                     capacities)
-    game.solve()
-
-    matching = game.matching
-
-    for dance_matching in matching:
-        print(dance_matching)
+    for dance in dances:
+        print(dance, dances[dance].rankings)
 
 
 if __name__ == "__main__":
