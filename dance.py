@@ -8,6 +8,7 @@ class Dance:
         self.preferences = []
         self.matched = []
         self.unmatched = []
+        self.original_score = {}
         # First list is for purple rankings (0)
         # Second list is for green rankings (1), etc.
         self.rankings = [[], [], []]
@@ -19,15 +20,14 @@ class Dance:
         if ranking == 3:
             self.reds.append(dancer)
         else:
-            self.rankings[ranking].append(dancer.email)
+            self.rankings[ranking].append(dancer)
 
-        # Keep track of what score the dancer got.
-        dancer.add_score(self.name, ranking)
+        self.original_score[dancer.email] = ranking
 
     # Creates the preference list once the dance is done collecting dancers and rankings.
-    # Once this method is called, the class is in a fundamentally different state than before.
-    # I think this is poor design, but whatever.
+    # Really I should be using a builder class here, but whatever.
     def ready(self):
+        assert self.is_ready == False
         # Again, like with dancers, if a dance ranked n people as the same score,
         # then we can just shuffle the list to get an ordering from 1 to n.
         for x in self.rankings:

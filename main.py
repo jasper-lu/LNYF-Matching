@@ -3,7 +3,7 @@ from absl import flags
 from absl import logging as log
 from dance import Dance
 from dancer import Dancers, Dancer
-from matching.games import HospitalResident
+from matching import match_dancers
 import pandas as pd
 
 flags.DEFINE_string("quotas", None, "Filename associated with dance quotas.")
@@ -32,12 +32,16 @@ def create_dances(quotas_df, dance_scores_df, dancers):
 
     for _, row in dance_scores_df.iterrows():
         dance = row['dance'].strip()
-        dancer = dancers.get_dancer(row['email'])
+        email = row['email'].strip().lower()
+        dancer = dancers.get_dancer(email)
+
+        if not dancer.preffed(dance):
+            dancer.add_didnt_pref(dance)
 
         assert dance in dances, "Error. Dance with name %s not found in quotas file." % (
             dance)
 
-        dances[dance].add_dancer(dancers.get_dancer(row['email']),
+        dances[dance].add_dancer(dancers[email],
                                  row['score'])
 
     for dance in dances.values():
@@ -87,15 +91,7 @@ def main(argv):
     dancers = create_dancers(dancer_rankings_df)
     dances = create_dances(quotas_df, dance_scores_df, dancers)
 
-    # Set up the stable marriage preference list.
-    dancer_prefs = {x.email: x.preferences for x in dancers}
-    dance_prefs = {x.name: x.rankings for x in dances.values()}
-    capacities = {x.name: x.quota for x in dances.values()}
-
-    # Our matching algorithm is basically just the hospital matching algorithm.
-    # https://en.wikipedia.org/wiki/Stable_marriage_problem
-    for dance in dances:
-        print(dance, dances[dance].rankings)
+    matchings = match_dancers(dancers, dances, False)
 
 
 if __name__ == "__main__":

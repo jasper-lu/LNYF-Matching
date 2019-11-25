@@ -27,19 +27,34 @@ class Dancers:
 
         return dancer
 
+    def __getitem__(self, email):
+        return self.get_dancer(email)
+
+    def get_dancer_prefs(self, email):
+        return self.dancers[email].preferences
+
     def __iter__(self):
         return iter(self.dancers.values())
 
 
 class Dancer:
 
-    def __init__(self):
-        self.scores = {}
+    def __init__(self, email, name="", year=0, gender="?", tshirt_size="", preferences=[], nonauditions=[]):
+        self.email = email
+        self.name = name
+        self.year = year
+        self.gender = gender
+        self.tshirt_size = tshirt_size
+        self.preferences = preferences
+        self.nonauditions = nonauditions
+        self.didnt_pref = []
+        self.dance = None
 
-    def add_score(self, dance_name, score):
-        self.scores[dance_name] = score
-        self.preferences = []
-        self.nonauditions = []
+    def preffed(self, dance_name):
+        return dance_name in self.preferences
+
+    def add_didnt_pref(self, dance_name):
+        self.didnt_pref.append(dance_name)
 
     @classmethod
     def from_pandas_row(cls, dancer_row):
@@ -63,18 +78,16 @@ class Dancer:
         # Flatten the list of lists.
         preferences = [item for sublist in choices for item in sublist]
 
-        dancer = cls()
-        dancer.email = dancer_row["email"].strip()
-        dancer.name = dancer_row["name"].strip()
-        dancer.year = dancer_row["year"]
-        dancer.gender = dancer_row["gender"]
-        dancer.tshirt_size = dancer_row["tshirt_size"]
-        dancer.preferences = preferences
-        dancer.nonauditions = [x.strip() for x in dancer_row["nonauditions"].split(',')]
-        return dancer
+        email = dancer_row["email"].strip().lower()
+        name = dancer_row["name"].strip()
+        year = dancer_row["year"]
+        gender = dancer_row["gender"]
+        tshirt_size = dancer_row["tshirt_size"]
+        nonauditions = [x.strip() for x in dancer_row["nonauditions"].split(',')]
+        
+        return cls(email, name, year, gender, tshirt_size, preferences, nonauditions)
 
     @classmethod
     def from_email(cls, email):
-        dumb_dancer = cls()
-        dumb_dancer.email = email
+        dumb_dancer = cls(email)
         return dumb_dancer
