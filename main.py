@@ -1,7 +1,7 @@
 from absl import app
 from absl import flags
 from absl import logging as log
-from dance import Dance
+from dance import Dances, Dance
 from dancer import Dancers, Dancer
 from matching import match_dancers
 import pandas as pd
@@ -19,16 +19,16 @@ FLAGS = flags.FLAGS
 def create_dancers(dancers_df):
     dancers = Dancers()
     for _, row in dancers_df.iterrows():
-        print(row)
         dancers.add_dancer(Dancer.from_pandas_row(row))
 
     return dancers
 
 
 def create_dances(quotas_df, dance_scores_df, dancers):
-    dances = {}
+    dances = Dances()
     for _, row in quotas_df.iterrows():
-        dances[row['dance'].strip()] = Dance(row['dance'].strip(), int(row['quota']))
+        dance = Dance(row['dance'].strip(), int(row['quota']))
+        dances.add_dance(dance)
 
     for _, row in dance_scores_df.iterrows():
         dance = row['dance'].strip()
@@ -44,11 +44,8 @@ def create_dances(quotas_df, dance_scores_df, dancers):
         dances[dance].add_dancer(dancers[email],
                                  row['score'])
 
-    for dance in dances.values():
+    for dance in dances:
         dance.ready()
-
-    print(len(dancers.anonymous_dancers))
-    print(len(dancers.dancers.values()))
 
     return dances
 
@@ -91,8 +88,27 @@ def main(argv):
     dancers = create_dancers(dancer_rankings_df)
     dances = create_dances(quotas_df, dance_scores_df, dancers)
 
+    log.info("Done loading dances and dancers into memory. Running matching algorithm now...")
+
     matchings = match_dancers(dancers, dances, False)
 
+    log.info("Done matching dancers to dances. Generating output files...")
+
+    for k, v in matchings.items():
+        dancers_matched = [dancers[x.name] for x in v]
+        dances[k.name].set_matchings(dancers_matched)
+
+        for dancer in dancers_matched:
+            # Sanity check, first.
+            if dancers[dancer.email].dance:
+                print("%s may have been assigned to more than one dance. Is this a mistake?")
+            dancers[dancer.email].dance = k.name
+
+    dancers.to_pandas_df().to_csv("matchings_by_dancer.csv")
+    dances.to_pandas_df().to_csv("matchings_by_dance.csv")
+
+    log.info("Find matchings by dancer in matchings_by_dancer.csv")
+    log.info("Find matchings by dance in matchings_by_dance.csv")
 
 if __name__ == "__main__":
     app.run(main)
