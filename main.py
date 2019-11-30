@@ -41,8 +41,7 @@ def create_dances(quotas_df, dance_scores_df, dancers):
         assert dance in dances, "Error. Dance with name %s not found in quotas file." % (
             dance)
 
-        dances[dance].add_dancer(dancers[email],
-                                 row['score'])
+        dances[dance].add_dancer(dancers[email], row['score'])
 
     for dance in dances:
         dance.ready()
@@ -53,8 +52,8 @@ def create_dances(quotas_df, dance_scores_df, dancers):
 QUOTAS_COLUMN_NAMES = ["dance", "quota"]
 DANCE_SCORES_COLUMN_NAMES = ["dance", "name", "email", "score"]
 DANCER_COLUMN_NAMES = [
-    "timestamp", "email", "name", "year", "gender", "tshirt_size", "first_choice",
-    "second_choice", "third_choice", "nonauditions"
+    "timestamp", "email", "name", "year", "gender", "tshirt_size",
+    "first_choice", "second_choice", "third_choice", "nonauditions"
 ]
 
 
@@ -70,25 +69,30 @@ def main(argv):
                 dance_scores file."
 
     assert FLAGS.dancer_rankings, "Must pass in a dancer_rankings file using \
-        --dancer_rankings=<filename>. See dance_scores file for the format of the \
+        --dancer_rankings=<filename>. See dancer_rankings file for the format of the \
         dance_scores file."
 
     # Load in all the files.
     quotas_df = pd.read_csv(FLAGS.quotas,
                             names=QUOTAS_COLUMN_NAMES,
-                            keep_default_na=False, index_col=False)
+                            keep_default_na=False,
+                            index_col=False)
     dance_scores_df = pd.read_csv(FLAGS.dance_scores,
                                   names=DANCE_SCORES_COLUMN_NAMES,
-                            keep_default_na=False, index_col=False)
+                                  keep_default_na=False,
+                                  index_col=False)
     dancer_rankings_df = pd.read_csv(FLAGS.dancer_rankings,
                                      names=DANCER_COLUMN_NAMES,
-                            keep_default_na=False, index_col=False)
+                                     keep_default_na=False,
+                                     index_col=False)
 
     # Make the data in an easier to work with format.
     dancers = create_dancers(dancer_rankings_df)
     dances = create_dances(quotas_df, dance_scores_df, dancers)
 
-    log.info("Done loading dances and dancers into memory. Running matching algorithm now...")
+    log.info(
+        "Done loading dances and dancers into memory. Running matching algorithm now..."
+    )
 
     matchings = match_dancers(dancers, dances, False)
 
@@ -101,7 +105,9 @@ def main(argv):
         for dancer in dancers_matched:
             # Sanity check, first.
             if dancers[dancer.email].dance:
-                print("%s may have been assigned to more than one dance. Is this a mistake?")
+                print(
+                    "%s may have been assigned to more than one dance. Is this a mistake?"
+                )
             dancers[dancer.email].dance = k.name
 
     dancers.to_pandas_df().to_csv("matchings_by_dancer.csv")
@@ -109,6 +115,7 @@ def main(argv):
 
     log.info("Find matchings by dancer in matchings_by_dancer.csv")
     log.info("Find matchings by dance in matchings_by_dance.csv")
+
 
 if __name__ == "__main__":
     app.run(main)

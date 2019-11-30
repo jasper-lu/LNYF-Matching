@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import random
 
+
 class Dancers:
 
     def __init__(self):
@@ -12,9 +13,10 @@ class Dancers:
 
     def add_dancer(self, dancer):
         if dancer.email in self.dancers:
-            log.info("Dancer with email %s is duplicated. Pls fix.", dancer.email)
+            log.info("Dancer with email %s is duplicated. Pls fix.",
+                     dancer.email)
             self.duplicates.append(dancer.email)
-            
+
         self.dancers[dancer.email] = dancer
 
     # If dancer corresponding to the row exists, returns dancer.
@@ -25,9 +27,11 @@ class Dancers:
             dancer = Dancer.from_email(email)
             self.anonymous_dancers.append(dancer)
             self.add_dancer(dancer)
+            log.info("Could not find dance ranking for dancer with email %s!",
+                     email)
             log.info(
-                "Could not find dance ranking for dancer with email %s!", email)
-            log.info("Either they forgot to fill out a dance ranking form, or gave a different email to the choreographer. Will not match dancer with email %s...", email)
+                "Either they forgot to fill out a dance ranking form, or gave a different email to the choreographer. Will not match dancer with email %s...",
+                email)
 
         return dancer
 
@@ -47,14 +51,25 @@ class Dancers:
     def __iter__(self):
         return iter(self.dancers.values())
 
+
 DANCER_OUTPUT_COLUMN_NAMES = np.array([
-    "Email", "Name", "Year", "Gender", "T-Shirt Size", "Dance", "Ratings", "Nonaudition Dances", "Didn't Rank"
+    "Email", "Name", "Year", "Gender", "T-Shirt Size", "Dance",
+    "Ratings (dance, score, ranking)", "Nonaudition Dances", "Didn't Rank"
 ])
 NUMBER_TO_COLOR = ["Purple", "Green", "Yellow", "Red"]
 
+
 class Dancer:
 
-    def __init__(self, email, name="", year=0, gender="?", tshirt_size="", pref_tier = {}, preferences=[], nonauditions=[]):
+    def __init__(self,
+                 email,
+                 name="",
+                 year=0,
+                 gender="?",
+                 tshirt_size="",
+                 pref_tier={},
+                 preferences=[],
+                 nonauditions=[]):
         self.email = email
         self.name = name
         self.year = year
@@ -65,7 +80,7 @@ class Dancer:
         self.nonauditions = nonauditions
         self.didnt_pref = []
         self.dance = None
-        self.ratings = {} 
+        self.ratings = {}
 
     def preffed(self, dance_name):
         return dance_name in self.preferences
@@ -74,29 +89,34 @@ class Dancer:
         self.didnt_pref.append(dance_name)
 
     def to_pandas_df(self, mask=[]):
-        index_mask = [np.where(DANCER_OUTPUT_COLUMN_NAMES == x)[0][0] for x in mask]
+        index_mask = [
+            np.where(DANCER_OUTPUT_COLUMN_NAMES == x)[0][0] for x in mask
+        ]
         mask = np.ones(len(DANCER_OUTPUT_COLUMN_NAMES), dtype=bool)
         mask[index_mask] = False
 
-        columns = DANCER_OUTPUT_COLUMN_NAMES[mask,...]
+        columns = DANCER_OUTPUT_COLUMN_NAMES[mask, ...]
 
         assigned_dance = self.dance if self.dance else ""
-        
+
         other_dances = []
         for k, v in self.ratings.items():
             pref_tier = self.pref_tier.get(k, "didn't rank")
-            other_dances.append("(%s, %s, %s)" %(k, NUMBER_TO_COLOR[v], pref_tier))
+            other_dances.append("(%s, %s, %s)" %
+                                (k, NUMBER_TO_COLOR[v], pref_tier))
         other_dances = ', '.join(other_dances)
 
         nonaudition_dances = ', '.join(self.nonauditions)
 
         didnts = ', '.join(self.didnt_pref)
 
-        row = np.array([self.email, self.name, self.year, self.gender, self.tshirt_size,
-            assigned_dance, other_dances, nonaudition_dances, didnts])
+        row = np.array([
+            self.email, self.name, self.year, self.gender, self.tshirt_size,
+            assigned_dance, other_dances, nonaudition_dances, didnts
+        ])
 
         row = row[mask, ...]
-        
+
         df = pd.DataFrame([row], columns=columns)
         return df
 
@@ -110,7 +130,7 @@ class Dancer:
         # i.e. "Haka, K-Pop" -> ["Haka", "K-Pop"]
         choices = list(filter(None, choices))
         choices = [[y.strip() for y in x.split(',')] for x in choices]
-        
+
         pref_tier = {}
         for i, x in enumerate(choices):
             for y in x:
@@ -132,9 +152,12 @@ class Dancer:
         year = dancer_row["year"]
         gender = dancer_row["gender"]
         tshirt_size = dancer_row["tshirt_size"]
-        nonauditions = [x.strip() for x in dancer_row["nonauditions"].split(',')]
-        
-        return cls(email, name, year, gender, tshirt_size, pref_tier, preferences, nonauditions)
+        nonauditions = [
+            x.strip() for x in dancer_row["nonauditions"].split(',')
+        ]
+
+        return cls(email, name, year, gender, tshirt_size, pref_tier,
+                   preferences, nonauditions)
 
     @classmethod
     def from_email(cls, email):

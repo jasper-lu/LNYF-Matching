@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import random
 
-class Dances: 
+
+class Dances:
+
     def __init__(self):
         self.dances = {}
 
@@ -19,11 +21,12 @@ class Dances:
         self.dances[dance.name] = dance
 
     def to_pandas_df(self):
-        d = {dance.name : dance.to_pandas_df() for dance in self.dances.values() }
+        d = {dance.name: dance.to_pandas_df() for dance in self.dances.values()}
         return pd.concat(d)
 
 
 class Dance:
+
     def __init__(self, dance_name, quota):
         self.name = dance_name
         self.quota = quota
@@ -72,19 +75,34 @@ class Dance:
         return self.original_score[dancer_email]
 
     def to_pandas_df(self, include_unmatched=True):
-        matched_dfs = [x.to_pandas_df(mask=["Dance", "Nonaudition Dances"]) 
-            for x in  self.matchings]
+        matched_dfs = [
+            x.to_pandas_df(mask=["Dance", "Nonaudition Dances"])
+            for x in self.matchings
+        ]
 
         matched_dfs = pd.concat(matched_dfs)
 
-        if not include_unmatched or not self.unmatched:
-            return matched_dfs
+        d = {'Matched': matched_dfs}
 
-        unmatched_dfs = [x.to_pandas_df(mask=["Dance", "Nonaudition Dances"]) for x in self.unmatched]
+        if include_unmatched and self.unmatched:
+            unmatched_dfs = [
+                x.to_pandas_df(mask=["Dance", "Nonaudition Dances"])
+                for x in self.unmatched
+            ]
 
-        unmatched_dfs = pd.concat(unmatched_dfs)
+            unmatched_dfs = pd.concat(unmatched_dfs)
 
-        d = { 'matched' : matched_dfs, 'unmatched': unmatched_dfs }
+            d['Unmatched'] = unmatched_dfs
+
+        if self.reds:
+
+            rejected_dfs = [
+                x.to_pandas_df(mask=["Dance", "Nonaudition Dances"])
+                for x in self.reds
+            ]
+
+            rejected_dfs = pd.concat(rejected_dfs)
+
+            d['Rejected'] = rejected_dfs
 
         return pd.concat(d)
-
