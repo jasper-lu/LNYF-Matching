@@ -1,4 +1,4 @@
-# LNYF-Matching
+# LNYF Matching
 Matches dances to dancers using a variant of Gale-Shapley's stable marriage matching algorithm.
 
 ## Instructions
